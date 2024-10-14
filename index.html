@@ -17,6 +17,7 @@
             background-color: white;
             max-height: 200px;
             overflow-y: auto;
+            width: calc(100% - 20px); /* Full width minus padding */
         }
         .autocomplete-item {
             padding: 10px;
@@ -61,7 +62,7 @@ async function fetchItemNames() {
 
         if (data.success && data.results) {
             // Extract names from results
-            itemNamesCache = data.results.map(item => item.shortname); 
+            itemNamesCache = data.results.map(item => item.name); // Use name for autocompletion
             localStorage.setItem('itemNamesCache', JSON.stringify(itemNamesCache));
             console.log('Item names cached:', itemNamesCache);
         } else {
@@ -80,27 +81,27 @@ function showAutocompleteSuggestions(value) {
 
     if (!value) return;
 
-    const filteredNames = itemNamesCache.filter(shortname => shortname.toLowerCase().startsWith(value.toLowerCase()));
+    const filteredNames = itemNamesCache.filter(name => name.toLowerCase().startsWith(value.toLowerCase()));
     console.log('Filtered item names:', filteredNames);
 
-    filteredNames.forEach(shortname => {
+    filteredNames.forEach(name => {
         const item = document.createElement('div');
         item.classList.add('autocomplete-item');
-        item.textContent = shortname;
+        item.textContent = name;
         item.addEventListener('click', () => {
-            document.getElementById('item-name').value = shortname;
+            document.getElementById('item-name').value = name;
             autocompleteList.innerHTML = ''; // Clear suggestions
-            console.log('Selected item:', shortname);
+            console.log('Selected item:', name);
         });
         autocompleteList.appendChild(item);
     });
 }
 
-// Function to fetch item details using the shortname
-async function fetchItemDetails(shortname) {
-    console.log('Fetching details for item:', shortname);
+// Function to fetch item details using the name
+async function fetchItemDetails(name) {
+    console.log('Fetching details for item:', name);
     try {
-        const response = await fetch(`${API_BASE_URL}/get/bylongname/${shortname}`);
+        const response = await fetch(`${API_BASE_URL}/get/bylongname/${encodeURIComponent(name)}`);
 
         // Ensure we got a valid response
         if (!response.ok) {
@@ -121,7 +122,7 @@ function displayItemInfo(item) {
     console.log('Displaying item information:', item);
     const itemInfoDiv = document.getElementById('item-info');
     itemInfoDiv.innerHTML = `
-        <h2>${item.name} (${item.shortname})</h2>
+        <h2>${item.name}</h2>
         <img src="${item.icon_path}" alt="${item.name}" style="width: 100px; height: 100px;">
         <p><strong>Category:</strong> ${item.category}</p>
         <p><strong>Blueprint:</strong> ${item.blueprint}</p>
@@ -139,9 +140,9 @@ document.getElementById('item-name').addEventListener('input', (e) => {
 });
 
 document.getElementById('search-btn').addEventListener('click', () => {
-    const shortname = document.getElementById('item-name').value;
-    console.log('Search button clicked. Item name:', shortname);
-    fetchItemDetails(shortname);
+    const name = document.getElementById('item-name').value;
+    console.log('Search button clicked. Item name:', name);
+    fetchItemDetails(name);
 });
 
 // Initial fetch for item names
