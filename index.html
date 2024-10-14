@@ -6,25 +6,72 @@
     <title>Item Search</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 20px;
+            background-color: #1b1b1b; /* Dark background */
+            color: #dcdcdc; /* Light text color */
+        }
+        h1 {
+            color: #e2b057; /* Rust-inspired color */
+        }
+        label {
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: calc(100% - 20px);
+            border: 2px solid #e2b057; /* Rust-inspired border */
+            border-radius: 5px;
+            background-color: #2c2c2c; /* Darker input field */
+            color: #dcdcdc;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #d8b24e; /* Lighter rust color on focus */
+            transition: border-color 0.3s;
         }
         #autocomplete-list {
-            border: 1px solid #ccc;
+            border: 1px solid #e2b057; /* Rust border */
             z-index: 999;
             position: absolute;
-            background-color: white;
+            background-color: #2c2c2c; /* Darker background for suggestions */
             max-height: 200px;
             overflow-y: auto;
             width: calc(100% - 20px); /* Full width minus padding */
+            opacity: 0; /* Initially hidden */
+            transition: opacity 0.3s ease-in-out; /* Fade-in effect */
         }
         .autocomplete-item {
             padding: 10px;
             cursor: pointer;
+            color: #dcdcdc; /* Text color */
+            transition: background-color 0.3s;
         }
         .autocomplete-item:hover {
-            background-color: #f0f0f0;
+            background-color: #4c4c4c; /* Dark hover color */
+        }
+        #search-btn {
+            background-color: #e2b057; /* Rust-inspired button color */
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: #1b1b1b; /* Dark text */
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #search-btn:hover {
+            background-color: #d8b24e; /* Lighter rust on hover */
+        }
+        #item-info {
+            margin-top: 20px;
+            opacity: 0; /* Initially hidden */
+            transition: opacity 0.3s ease-in-out; /* Fade-in effect */
+        }
+        #item-info.visible {
+            opacity: 1; /* Show item info */
         }
     </style>
 </head>
@@ -36,7 +83,7 @@
 <div id="autocomplete-list"></div>
 <button id="search-btn">Search</button>
 
-<div id="item-info" style="margin-top: 20px;"></div>
+<div id="item-info"></div>
 
 <script>
 // Check if we have cached item names
@@ -50,7 +97,7 @@ async function fetchItemNames() {
     console.log('Fetching item names from the API...');
     try {
         const response = await fetch(`${API_BASE_URL}/get/allnames`);
-        
+
         // Ensure we got a valid response
         if (!response.ok) {
             console.error(`HTTP error! status: ${response.status}`);
@@ -78,6 +125,7 @@ function showAutocompleteSuggestions(value) {
     console.log('Showing autocomplete suggestions for:', value);
     const autocompleteList = document.getElementById('autocomplete-list');
     autocompleteList.innerHTML = ''; // Clear previous suggestions
+    autocompleteList.style.opacity = 0; // Hide the list initially
 
     if (!value) return;
 
@@ -91,10 +139,16 @@ function showAutocompleteSuggestions(value) {
         item.addEventListener('click', () => {
             document.getElementById('item-name').value = name;
             autocompleteList.innerHTML = ''; // Clear suggestions
+            autocompleteList.style.opacity = 0; // Hide the list
             console.log('Selected item:', name);
         });
         autocompleteList.appendChild(item);
     });
+
+    // Show the autocomplete list with fade-in
+    if (filteredNames.length > 0) {
+        autocompleteList.style.opacity = 1;
+    }
 }
 
 // Function to fetch item details using the name
@@ -131,6 +185,7 @@ function displayItemInfo(item) {
         <p><strong>Workbench Level:</strong> ${item.workbench_level}</p>
         <p><strong>Availability:</strong> ${item.availability}</p>
     `;
+    itemInfoDiv.classList.add('visible'); // Add class to make it visible
 }
 
 // Event Listeners
