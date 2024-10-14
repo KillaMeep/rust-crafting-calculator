@@ -37,9 +37,6 @@
 
 <div id="item-info" style="margin-top: 20px;"></div>
 
-<!-- For Testing Image Direct Fetch -->
-<img id="test-image" src="" alt="Test Image" style="width: 100px; height: 100px; margin-top: 20px;">
-
 <script>
 // Check if we have cached item names
 let itemNamesCache = JSON.parse(localStorage.getItem('itemNamesCache')) || [];
@@ -52,7 +49,7 @@ async function fetchItemNames() {
     console.log('Fetching item names from the API...');
     try {
         const response = await fetch(`${API_BASE_URL}/get/allnames`);
-
+        
         // Ensure we got a valid response
         if (!response.ok) {
             console.error(`HTTP error! status: ${response.status}`);
@@ -64,7 +61,7 @@ async function fetchItemNames() {
 
         if (data.success && data.results) {
             // Extract names from results
-            itemNamesCache = data.results.map(item => item.shortname);
+            itemNamesCache = data.results.map(item => item.shortname); 
             localStorage.setItem('itemNamesCache', JSON.stringify(itemNamesCache));
             console.log('Item names cached:', itemNamesCache);
         } else {
@@ -113,14 +110,7 @@ async function fetchItemDetails(shortname) {
 
         const itemInfo = await response.json();
         console.log('Item details fetched successfully:', itemInfo);
-
-        // Fetch the image directly without Base64 conversion
-        itemInfo.image = `https://images.rust.killameep.com/items/${itemInfo.shortname}.png`;
         displayItemInfo(itemInfo);
-
-        // TEST: Direct image fetching for troubleshooting
-        document.getElementById('test-image').src = `https://images.rust.killameep.com/items/${itemInfo.shortname}.png`;
-
     } catch (error) {
         console.error('Error fetching item details:', error);
     }
@@ -130,10 +120,9 @@ async function fetchItemDetails(shortname) {
 function displayItemInfo(item) {
     console.log('Displaying item information:', item);
     const itemInfoDiv = document.getElementById('item-info');
-
     itemInfoDiv.innerHTML = `
         <h2>${item.name} (${item.shortname})</h2>
-        <img src="${item.image}" alt="${item.name}" style="width: 100px; height: 100px;">
+        <img src="${item.icon_path}" alt="${item.name}" style="width: 100px; height: 100px;">
         <p><strong>Category:</strong> ${item.category}</p>
         <p><strong>Blueprint:</strong> ${item.blueprint}</p>
         <p><strong>Ingredients:</strong> ${JSON.parse(item.ingredients).map(ing => `${ing.quantity}x ${ing.name}`).join(', ')}</p>
