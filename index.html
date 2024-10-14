@@ -4,9 +4,164 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Item Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        #autocomplete-list {
+            border: 1px solid #ccc;
+            z-index: 999;
+            position: absolute;
+            background-color: white;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .autocomplete-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Image Test</h1>
-    <img src="https://images.rust.killameep.com/items/rifle.ak.png" alt="Rifle AK">
+
+<h1>Item Search</h1>
+<label for="item-name">Search for an Item:</label>
+<input type="text" id="item-name" placeholder="Type item name..." autocomplete="off">
+<div id="autocomplete-list"></div>
+<button id="search-btn">Search</button>
+
+<div id="item-info" style="margin-top: 20px;"></div>
+
+<!-- For Testing Image Direct Fetch -->
+<img id="test-image" src="" alt="Test Image" style="width: 100px; height: 100px; margin-top: 20px;">
+
+<script>
+// Check if we have cached item names
+let itemNamesCache = JSON.parse(localStorage.getItem('itemNamesCache')) || [];
+
+// Base API URL
+const API_BASE_URL = 'https://api.rust.killameep.com';
+
+// Function to fetch item names
+async function fetchItemNames() {
+    console.log('Fetching item names from the API...');
+    try {
+        const response = await fetch(`${API_BASE_URL}/get/allnames`);
+
+        // Ensure we got a valid response
+        if (!response.ok) {
+            console.error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Item names fetched successfully:', data);
+
+        if (data.success && data.results) {
+            // Extract names from results
+            itemNamesCache = data.results.map(item => item.shortname);
+            localStorage.setItem('itemNamesCache', JSON.stringify(itemNamesCache));
+            console.log('Item names cached:', itemNamesCache);
+        } else {
+            console.error('Invalid data structure', data);
+        }
+    } catch (error) {
+        console.error('Error fetching item names:', error);
+    }
+}
+
+// Function to show autocomplete suggestions
+function showAutocompleteSuggestions(value) {
+    console.log('Showing autocomplete suggestions for:', value);
+    const autocompleteList = document.getElementById('autocomplete-list');
+    autocompleteList.innerHTML = ''; // Clear previous suggestions
+
+    if (!value) return;
+
+    const filteredNames = itemNamesCache.filter(shortname => shortname.toLowerCase().startsWith(value.toLowerCase()));
+    console.log('Filtered item names:', filteredNames);
+
+    filteredNames.forEach(shortname => {
+        const item = document.createElement('div');
+        item.classList.add('autocomplete-item');
+        item.textContent = shortname;
+        item.addEventListener('click', () => {
+            document.getElementById('item-name').value = shortname;
+            autocompleteList.innerHTML = ''; // Clear suggestions
+            console.log('Selected item:', shortname);
+        });
+        autocompleteList.appendChild(item);
+    });
+}
+
+// Function to fetch item details using the shortname
+async function fetchItemDetails(shortname) {
+    console.log('Fetching details for item:', shortname);
+    try {
+        const response = await fetch(`${API_BASE_URL}/get/bylongname/${shortname}`);
+
+        // Ensure we got a valid response
+        if (!response.ok) {
+            console.error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const itemInfo = await response.json();
+        console.log('Item details fetched successfully:', itemInfo);
+
+        // Fetch the image directly without Base64 conversion
+        itemInfo.image = `https://images.rust.killameep.com/items/${itemInfo.shortname}.png`;
+        displayItemInfo(itemInfo);
+
+        // TEST: Direct image fetching for troubleshooting
+        document.getElementById('test-image').src = `https://images.rust.killameep.com/items/${itemInfo.shortname}.png`;
+
+    } catch (error) {
+        console.error('Error fetching item details:', error);
+    }
+}
+
+// Function to display item information
+function displayItemInfo(item) {
+    console.log('Displaying item information:', item);
+    const itemInfoDiv = document.getElementById('item-info');
+
+    itemInfoDiv.innerHTML = `
+        <h2>${item.name} (${item.shortname})</h2>
+        <img src="${item.image}" alt="${item.name}" style="width: 100px; height: 100px;">
+        <p><strong>Category:</strong> ${item.category}</p>
+        <p><strong>Blueprint:</strong> ${item.blueprint}</p>
+        <p><strong>Ingredients:</strong> ${JSON.parse(item.ingredients).map(ing => `${ing.quantity}x ${ing.name}`).join(', ')}</p>
+        <p><strong>Crafting Time:</strong> ${item.crafting_time}</p>
+        <p><strong>Workbench Level:</strong> ${item.workbench_level}</p>
+        <p><strong>Availability:</strong> ${item.availability}</p>
+    `;
+}
+
+// Event Listeners
+document.getElementById('item-name').addEventListener('input', (e) => {
+    console.log('Input event triggered:', e.target.value);
+    showAutocompleteSuggestions(e.target.value);
+});
+
+document.getElementById('search-btn').addEventListener('click', () => {
+    const shortname = document.getElementById('item-name').value;
+    console.log('Search button clicked. Item name:', shortname);
+    fetchItemDetails(shortname);
+});
+
+// Initial fetch for item names
+if (itemNamesCache.length === 0) {
+    fetchItemNames();
+} else {
+    console.log("Using cached item names");
+}
+</script>
+
 </body>
 </html>
