@@ -171,22 +171,40 @@ async function fetchItemDetails(name) {
     }
 }
 
+
 // Function to display item information
 function displayItemInfo(item) {
     console.log('Displaying item information:', item);
     const itemInfoDiv = document.getElementById('item-info');
+
+    // Parse ingredients safely
+    let ingredientsList;
+    try {
+        ingredientsList = JSON.parse(item.ingredients);
+    } catch (error) {
+        console.error('Error parsing ingredients:', error);
+        ingredientsList = []; // Fallback to an empty array if parsing fails
+    }
+
+    // Check if ingredientsList is an array
+    if (!Array.isArray(ingredientsList)) {
+        console.error('Ingredients is not an array:', ingredientsList);
+        ingredientsList = []; // Fallback to an empty array if it's not an array
+    }
+
     itemInfoDiv.innerHTML = `
         <h2>${item.name}</h2>
         <img src="${item.icon_path}" alt="${item.name}" style="width: 100px; height: 100px;">
         <p><strong>Category:</strong> ${item.category}</p>
         <p><strong>Blueprint:</strong> ${item.blueprint}</p>
-        <p><strong>Ingredients:</strong> ${JSON.parse(item.ingredients).map(ing => `${ing.quantity}x ${ing.name}`).join(', ')}</p>
+        <p><strong>Ingredients:</strong> ${ingredientsList.map(ing => `${ing.quantity}x ${ing.name}`).join(', ') || 'None'}</p>
         <p><strong>Crafting Time:</strong> ${item.crafting_time}</p>
         <p><strong>Workbench Level:</strong> ${item.workbench_level}</p>
         <p><strong>Availability:</strong> ${item.availability}</p>
     `;
     itemInfoDiv.classList.add('visible'); // Add class to make it visible
 }
+
 
 // Event Listeners
 document.getElementById('item-name').addEventListener('input', (e) => {
