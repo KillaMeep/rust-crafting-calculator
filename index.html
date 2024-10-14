@@ -85,144 +85,171 @@
 
 <div id="item-info"></div>
 
+
 <script>
-// Check if we have cached item names
-let itemNamesCache = JSON.parse(localStorage.getItem('itemNamesCache')) || [];
-
-// Base API URL
-const API_BASE_URL = 'https://api.rust.killameep.com';
-
-// Function to fetch item names
-async function fetchItemNames() {
-    console.log('Fetching item names from the API...');
-    try {
-        const response = await fetch(`${API_BASE_URL}/get/allnames`);
-
-        // Ensure we got a valid response
-        if (!response.ok) {
-            console.error(`HTTP error! status: ${response.status}`);
-            throw new Error(`HTTP error! status: ${response.status}`);
+    // Check if we have cached item names
+    let itemNamesCache = JSON.parse(localStorage.getItem('itemNamesCache')) || [];
+    
+    // Base API URL
+    const API_BASE_URL = 'https://api.rust.killameep.com';
+    
+    // Function to fetch item names
+    async function fetchItemNames() {
+        console.log('Fetching item names from the API...');
+        try {
+            const response = await fetch(`${API_BASE_URL}/get/allnames`);
+    
+            // Ensure we got a valid response
+            if (!response.ok) {
+                console.error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+    
+            const data = await response.json();
+            console.log('Item names fetched successfully:', data);
+    
+            if (data.success && data.results) {
+                // Extract names from results
+                itemNamesCache = data.results.map(item => item.name); // Use name for autocompletion
+                localStorage.setItem('itemNamesCache', JSON.stringify(itemNamesCache));
+                console.log('Item names cached:', itemNamesCache);
+            } else {
+                console.error('Invalid data structure', data);
+            }
+        } catch (error) {
+            console.error('Error fetching item names:', error);
         }
-
-        const data = await response.json();
-        console.log('Item names fetched successfully:', data);
-
-        if (data.success && data.results) {
-            // Extract names from results
-            itemNamesCache = data.results.map(item => item.name); // Use name for autocompletion
-            localStorage.setItem('itemNamesCache', JSON.stringify(itemNamesCache));
-            console.log('Item names cached:', itemNamesCache);
-        } else {
-            console.error('Invalid data structure', data);
-        }
-    } catch (error) {
-        console.error('Error fetching item names:', error);
     }
-}
-
-// Function to show autocomplete suggestions
-function showAutocompleteSuggestions(value) {
-    console.log('Showing autocomplete suggestions for:', value);
-    const autocompleteList = document.getElementById('autocomplete-list');
-    autocompleteList.innerHTML = ''; // Clear previous suggestions
-    autocompleteList.style.opacity = 0; // Hide the list initially
-
-    if (!value) return;
-
-    const filteredNames = itemNamesCache.filter(name => name.toLowerCase().startsWith(value.toLowerCase()));
-    console.log('Filtered item names:', filteredNames);
-
-    filteredNames.forEach(name => {
-        const item = document.createElement('div');
-        item.classList.add('autocomplete-item');
-        item.textContent = name;
-        item.addEventListener('click', () => {
-            document.getElementById('item-name').value = name;
-            autocompleteList.innerHTML = ''; // Clear suggestions
-            autocompleteList.style.opacity = 0; // Hide the list
-            console.log('Selected item:', name);
+    
+    // Function to show autocomplete suggestions
+    function showAutocompleteSuggestions(value) {
+        console.log('Showing autocomplete suggestions for:', value);
+        const autocompleteList = document.getElementById('autocomplete-list');
+        autocompleteList.innerHTML = ''; // Clear previous suggestions
+        autocompleteList.style.opacity = 0; // Hide the list initially
+    
+        if (!value) return;
+    
+        const filteredNames = itemNamesCache.filter(name => name.toLowerCase().startsWith(value.toLowerCase()));
+        console.log('Filtered item names:', filteredNames);
+    
+        filteredNames.forEach(name => {
+            const item = document.createElement('div');
+            item.classList.add('autocomplete-item');
+            item.textContent = name;
+            item.addEventListener('click', () => {
+                document.getElementById('item-name').value = name;
+                autocompleteList.innerHTML = ''; // Clear suggestions
+                autocompleteList.style.opacity = 0; // Hide the list
+                console.log('Selected item:', name);
+            });
+            autocompleteList.appendChild(item);
         });
-        autocompleteList.appendChild(item);
-    });
-
-    // Show the autocomplete list with fade-in
-    if (filteredNames.length > 0) {
-        autocompleteList.style.opacity = 1;
-    }
-}
-
-// Function to fetch item details using the name
-async function fetchItemDetails(name) {
-    console.log('Fetching details for item:', name);
-    try {
-        const response = await fetch(`${API_BASE_URL}/get/bylongname/${encodeURIComponent(name)}`);
-
-        // Ensure we got a valid response
-        if (!response.ok) {
-            console.error(`HTTP error! status: ${response.status}`);
-            throw new Error(`HTTP error! status: ${response.status}`);
+    
+        // Show the autocomplete list with fade-in
+        if (filteredNames.length > 0) {
+            autocompleteList.style.opacity = 1;
         }
-
-        const itemInfo = await response.json();
-        console.log('Item details fetched successfully:', itemInfo);
-        displayItemInfo(itemInfo);
-    } catch (error) {
-        console.error('Error fetching item details:', error);
     }
-}
-
-
-// Function to display item information
-function displayItemInfo(item) {
-    console.log('Displaying item information:', item);
-    const itemInfoDiv = document.getElementById('item-info');
-
-    // Parse ingredients safely
-    let ingredientsList;
-    try {
-        ingredientsList = JSON.parse(item.ingredients);
-    } catch (error) {
-        console.error('Error parsing ingredients:', error);
-        ingredientsList = []; // Fallback to an empty array if parsing fails
+    
+    // Function to fetch item details using the name
+    async function fetchItemDetails(name) {
+        console.log('Fetching details for item:', name);
+        try {
+            const response = await fetch(`${API_BASE_URL}/get/bylongname/${encodeURIComponent(name)}`);
+    
+            // Ensure we got a valid response
+            if (!response.ok) {
+                console.error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+    
+            const itemInfo = await response.json();
+            console.log('Item details fetched successfully:', itemInfo);
+            displayItemInfo(itemInfo);
+        } catch (error) {
+            console.error('Error fetching item details:', error);
+        }
     }
-
-    // Check if ingredientsList is an array
-    if (!Array.isArray(ingredientsList)) {
-        console.error('Ingredients is not an array:', ingredientsList);
-        ingredientsList = []; // Fallback to an empty array if it's not an array
+    
+    // Function to display item information
+    async function displayItemInfo(item) {
+        console.log('Displaying item information:', item);
+        const itemInfoDiv = document.getElementById('item-info');
+    
+        // Parse ingredients safely
+        let ingredientsList;
+        try {
+            ingredientsList = JSON.parse(item.ingredients);
+        } catch (error) {
+            console.error('Error parsing ingredients:', error);
+            ingredientsList = []; // Fallback to an empty array if parsing fails
+        }
+    
+        // Check if ingredientsList is an array
+        if (!Array.isArray(ingredientsList)) {
+            console.error('Ingredients is not an array:', ingredientsList);
+            ingredientsList = []; // Fallback to an empty array if it's not an array
+        }
+    
+        // Constructing the ingredients list with icons
+        const ingredientsHTML = await Promise.all(ingredientsList.map(async (ing) => {
+            const iconUrl = `${API_BASE_URL}/get/by/longname/icon_path?identifier=${encodeURIComponent(ing.name)}`;
+            
+            // Fetching the icon path
+            let iconPath;
+            try {
+                const response = await fetch(iconUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const iconData = await response.json();
+                iconPath = iconData.icon_path; // Get the icon URL from the response
+            } catch (error) {
+                console.error('Error fetching icon path:', error);
+                iconPath = ''; // Fallback if there's an error fetching the icon
+            }
+    
+            return `<span style="display: flex; align-items: center;">
+                        <img src="${iconPath}" alt="${ing.name}" style="width: 20px; height: 20px; margin-right: 5px;">
+                        ${ing.quantity}x ${ing.name}
+                    </span>`;
+        }));
+    
+        itemInfoDiv.innerHTML = `
+            <h2>${item.name}</h2>
+            <img src="${item.icon_path}" alt="${item.name}" style="width: 100px; height: 100px;">
+            <p><strong>Category:</strong> ${item.category}</p>
+            <p><strong>Blueprint:</strong> ${item.blueprint}</p>
+            <p><strong>Ingredients:</strong> ${ingredientsHTML.join(', ') || 'None'}</p>
+            <p><strong>Crafting Time:</strong> ${item.crafting_time}</p>
+            <p><strong>Workbench Level:</strong> ${item.workbench_level || 'N/A'}</p>
+        `;
+        itemInfoDiv.classList.add('visible'); // Add class to make it visible
     }
-
-    itemInfoDiv.innerHTML = `
-        <h2>${item.name}</h2>
-        <img src="${item.icon_path}" alt="${item.name}" style="width: 100px; height: 100px;">
-        <p><strong>Category:</strong> ${item.category}</p>
-        <p><strong>Blueprint:</strong> ${item.blueprint}</p>
-        <p><strong>Ingredients:</strong> ${ingredientsList.map(ing => `${ing.quantity}x ${ing.name}`).join(', ') || 'None'}</p>
-        <p><strong>Crafting Time:</strong> ${item.crafting_time}</p>
-    `;
-    itemInfoDiv.classList.add('visible'); // Add class to make it visible
-}
-
-
-// Event Listeners
-document.getElementById('item-name').addEventListener('input', (e) => {
-    console.log('Input event triggered:', e.target.value);
-    showAutocompleteSuggestions(e.target.value);
-});
-
-document.getElementById('search-btn').addEventListener('click', () => {
-    const name = document.getElementById('item-name').value;
-    console.log('Search button clicked. Item name:', name);
-    fetchItemDetails(name);
-});
-
-// Initial fetch for item names
-if (itemNamesCache.length === 0) {
-    fetchItemNames();
-} else {
-    console.log("Using cached item names");
-}
+    
+    // Event Listeners
+    document.getElementById('item-name').addEventListener('input', (e) => {
+        console.log('Input event triggered:', e.target.value);
+        showAutocompleteSuggestions(e.target.value);
+    });
+    
+    document.getElementById('search-btn').addEventListener('click', () => {
+        const name = document.getElementById('item-name').value;
+        console.log('Search button clicked. Item name:', name);
+        fetchItemDetails(name);
+    });
+    
+    // Initial fetch for item names
+    if (itemNamesCache.length === 0) {
+        fetchItemNames();
+    } else {
+        console.log("Using cached item names");
+    }
 </script>
+    
+
+
 
 </body>
 </html>
