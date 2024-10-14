@@ -211,7 +211,7 @@
             }
     
             return `<span style="display: flex; align-items: center;">
-                        <img src="${iconPath}" alt="${ing.name}" style="width: 20px; height: 20px; margin-right: 5px;">
+                        <img src="${iconPath}" alt="${ing.name}" style="width: 40px; height: 40px; margin-right: 5px;">
                         ${ing.quantity}x ${ing.name}
                     </span>`;
         }));
@@ -221,7 +221,7 @@
             <img src="${item.icon_path}" alt="${item.name}" style="width: 100px; height: 100px;">
             <p><strong>Category:</strong> ${item.category}</p>
             <p><strong>Blueprint:</strong> ${item.blueprint}</p>
-            <p><strong>Ingredients:</strong> ${ingredientsHTML.join(', ') || 'None'}</p>
+            <p><strong>Ingredients:</strong> ${ingredientsHTML.join(' ') || 'None'}</p>
             <p><strong>Crafting Time:</strong> ${item.crafting_time}</p>
             <p><strong>Workbench Level:</strong> ${item.workbench_level || 'N/A'}</p>
         `;
