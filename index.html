@@ -199,8 +199,6 @@ function displayItemInfo(item) {
         <p><strong>Blueprint:</strong> ${item.blueprint}</p>
         <p><strong>Ingredients:</strong> ${ingredientsList.map(ing => `${ing.quantity}x ${ing.name}`).join(', ') || 'None'}</p>
         <p><strong>Crafting Time:</strong> ${item.crafting_time}</p>
-        <p><strong>Workbench Level:</strong> ${item.workbench_level}</p>
-        <p><strong>Availability:</strong> ${item.availability}</p>
     `;
     itemInfoDiv.classList.add('visible'); // Add class to make it visible
 }
